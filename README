@@ -1,3 +1,3 @@
-This is dipshit: a work-in-progress implementation of UnnamedISA. Check out [OSCAPL](https://github.com/OSCAPL) for the relevant UISA standards.
+This is dipshit: a work-in-progress implementation of YSM for WebAssembly shenanigans. Check out [OSCAPL](https://github.com/OSCAPL) for the relevant YSM standards.
 
 Copyright (c) 2023 Disha Bhattacharjee, Somdipto Chakraborty, licensed under the GNU General Public License v3.0.
