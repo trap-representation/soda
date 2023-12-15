@@ -6,6 +6,7 @@
 #include "errors.h"
 #include "opcodes.h"
 #include "prof.h"
+#include "sysf.h"
 
 #define reg_pc 0
 #define reg_sp 1
@@ -2081,9 +2082,36 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
       reg[reg_pc]++;
       break;
 
-    case op_put:
-      printf("%c", (char) stack[reg[reg_sp] - 1]);
+    case op_open:
+      switch (stack[reg[reg_sp] - 1]) {
+      case 0: /* input/output */
+	break;
+
+      default:
+	return err_open;
+      }
       reg[reg_sp]--;
+      reg[reg_pc]++;
+      break;
+
+    case op_invoke:
+      switch (stack[reg[reg_sp] - 2]) {
+      case 0: /* input/output */
+	switch(stack[reg[reg_sp] - 1]) {
+	case 0: /* write */
+	  ds_putstr(code_c, stack[reg[reg_sp] - 3], &reg[reg_gpr0]);
+	  reg[reg_sp]--;
+	  break;
+
+	default:
+	  return err_invoke;
+	}
+	break;
+
+      default:
+	return err_invoke;
+      }
+      reg[reg_sp] -= 2;
       reg[reg_pc]++;
       break;
 
