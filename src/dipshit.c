@@ -28,9 +28,13 @@ static void *aligned_malloc(size_t alignment, size_t size){
   return return_mem;
 }
 
-EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
+#define REM_USE(i) (void)i;
+
+EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs, void *heap, ysm_l heap_size, ysm_ui heap_alignment) {
+  REM_USE(heap_size);
+  REM_USE(heap_alignment);
+
   ysm_l reg[1 + reg_gpr0 + 7];
-  void *heap;
   ysm_l *stack, *call_stack;
   ysm_uc *code_uc;
   ysm_us *code_us;
@@ -49,7 +53,7 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
   ysm_uc uc, uc_1;
   ysm_us us, us_1;
   ysm_ui ui, ui_1;
-  ysm_uns uns, uns_1;
+  ysm_nof_uns uns, uns_1;
   ysm_c c, c_1;
   ysm_s s, s_1;
   ysm_i i, i_1;
@@ -58,18 +62,12 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
 
   /* initialize stuff */
 
-  if ((heap = aligned_malloc(HEAP_ALIGNMENT * sizeof(ysm_uc), HEAP_BYTES)) == NULL) {
-    return err_implalloc;
-  }
-
   if ((stack = aligned_malloc(_Alignof(ysm_l), STACK_CELLS * sizeof(ysm_l))) == NULL) {
-    free(heap);
     return err_implalloc;
   }
 
   if ((call_stack = aligned_malloc(_Alignof(ysm_l), CALLSTACK_CELLS * sizeof(ysm_l))) == NULL) {
     free(stack);
-    free(heap);
     return err_implalloc;
   }
 
@@ -101,7 +99,6 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
     if (reg[reg_pc]  >=  reg[reg_cs] || reg[reg_pc] < reg[reg_cb]) {
       reg[reg_ia] = reg[reg_pc];
       free(stack);
-      free(heap);
       free(call_stack);
       return err_trap;
     }
@@ -112,19 +109,16 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
     case op_trap:
       reg[reg_ia] = reg[reg_pc];
       free(stack);
-      free(heap);
       free(call_stack);
       return err_trap;
 
     case op_halt:
       free(stack);
-      free(heap);
       free(call_stack);
       return 0;
 
     case op_haltr:
       free(stack);
-      free(heap);
       free(call_stack);
       return stack[reg[reg_sp]-1];
 
@@ -527,8 +521,8 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
     case op_lshl:
       l = stack[reg[reg_sp] - 1];
       l_1 = stack[reg[reg_sp] - 2];
-      memcpy(&uns, &l, sizeof(ysm_uns));
-      memcpy(&uns_1, &l_1, sizeof(ysm_uns));
+      memcpy(&uns, &l, sizeof(ysm_nof_uns));
+      memcpy(&uns_1, &l_1, sizeof(ysm_nof_uns));
       uns = ((uns + 0u) << (uns_1 + 0u)) & 0xffffffff;
       memcpy(&l, &uns, sizeof(ysm_l));
       stack[reg[reg_sp] - 2] = l;
@@ -593,8 +587,8 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
     case op_rshl:
       l = stack[reg[reg_sp] - 1];
       l_1 = stack[reg[reg_sp] - 2];
-      memcpy(&uns, &l, sizeof(ysm_uns));
-      memcpy(&uns_1, &l_1, sizeof(ysm_uns));
+      memcpy(&uns, &l, sizeof(ysm_nof_uns));
+      memcpy(&uns_1, &l_1, sizeof(ysm_nof_uns));
       uns=((uns + 0u) >> (uns_1 + 0u));
       memcpy(&l, &uns, sizeof(ysm_l));
       stack[reg[reg_sp] - 2] = l;
@@ -659,8 +653,8 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
     case op_andl:
       l = stack[reg[reg_sp] - 1];
       l_1 = stack[reg[reg_sp] - 2];
-      memcpy(&uns, &l, sizeof(ysm_uns));
-      memcpy(&uns_1, &l_1, sizeof(ysm_uns));
+      memcpy(&uns, &l, sizeof(ysm_nof_uns));
+      memcpy(&uns_1, &l_1, sizeof(ysm_nof_uns));
       uns = ((uns + 0u) & (uns_1 + 0u));
       memcpy(&l, &uns, sizeof(ysm_l));
       stack[reg[reg_sp] - 2] = l;
@@ -725,8 +719,8 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
     case op_orl:
       l = stack[reg[reg_sp] - 1];
       l_1 = stack[reg[reg_sp] - 2];
-      memcpy(&uns, &l, sizeof(ysm_uns));
-      memcpy(&uns_1, &l_1, sizeof(ysm_uns));
+      memcpy(&uns, &l, sizeof(ysm_nof_uns));
+      memcpy(&uns_1, &l_1, sizeof(ysm_nof_uns));
       uns = ((uns + 0u) | (uns_1 + 0u));
       memcpy(&l, &uns, sizeof(ysm_l));
       stack[reg[reg_sp] - 2] = l;
@@ -791,8 +785,8 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
     case op_xorl:
       l = stack[reg[reg_sp] - 1];
       l_1 = stack[reg[reg_sp] - 2];
-      memcpy(&uns, &l, sizeof(ysm_uns));
-      memcpy(&uns_1, &l_1, sizeof(ysm_uns));
+      memcpy(&uns, &l, sizeof(ysm_nof_uns));
+      memcpy(&uns_1, &l_1, sizeof(ysm_nof_uns));
       uns = ((uns + 0u) ^ (uns_1 + 0u));
       memcpy(&l, &uns, sizeof(ysm_l));
       stack[reg[reg_sp] - 2] = l;
@@ -844,7 +838,7 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
 
     case op_notl:
       l = stack[reg[reg_sp] - 1];
-      memcpy(&uns, &l, sizeof(ysm_uns));
+      memcpy(&uns, &l, sizeof(ysm_nof_uns));
       uns = ~ (uns + 0u) & 0xffffffff;
       memcpy(&l, &uns, sizeof(ysm_l));
       stack[reg[reg_sp] - 1] = l;
@@ -855,7 +849,6 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
       if(stack[reg[reg_sp] - 1] >= reg[reg_cs] || stack[reg[reg_sp] - 1] < reg[reg_cb]){
         reg[reg_ia] = stack[reg[reg_sp] - 1];
 	free(stack);
-	free(heap);
 	free(call_stack);
         return err_trap;
       }
@@ -868,7 +861,6 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
       if(stack[reg[reg_sp] - 1] >= reg[reg_cs] || stack[reg[reg_sp] - 1] < reg[reg_cb]){
         reg[reg_ia] = stack[reg[reg_sp] - 1];
 	free(stack);
-	free(heap);
 	free(call_stack);
         return err_trap;
       }
@@ -880,7 +872,6 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
       if(stack[reg[reg_sp] - 1] >= reg[reg_cs] || stack[reg[reg_sp] - 1] < reg[reg_cb]){
         reg[reg_ia] = stack[reg[reg_sp] - 1];
 	free(stack);
-	free(heap);
 	free(call_stack);
         return err_trap;
       }
@@ -893,7 +884,6 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
       if(stack[reg[reg_sp] - 1] >= reg[reg_cs] || stack[reg[reg_sp] - 1] < reg[reg_cb]){
         reg[reg_ia] = stack[reg[reg_sp] - 1];
 	free(stack);
-	free(heap);
 	free(call_stack);
         return err_trap;
       }
@@ -905,7 +895,6 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
       if(stack[reg[reg_sp] - 1] >= reg[reg_cs] || stack[reg[reg_sp] - 1] < reg[reg_cb]){
         reg[reg_ia] = stack[reg[reg_sp] - 1];
 	free(stack);
-	free(heap);
 	free(call_stack);
         return err_trap;
       }
@@ -918,7 +907,6 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
       if(stack[reg[reg_sp] - 1] >= reg[reg_cs] || stack[reg[reg_sp] - 1]<reg[reg_cb]){
         reg[reg_ia] = stack[reg[reg_sp] - 1];
 	free(stack);
-	free(heap);
 	free(call_stack);
         return err_trap;
       }
@@ -930,7 +918,6 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
       if(stack[reg[reg_sp] - 1] >= reg[reg_cs] || stack[reg[reg_sp] - 1] < reg[reg_cb]){
         reg[reg_ia] = stack[reg[reg_sp] - 1];
 	free(stack);
-	free(heap);
 	free(call_stack);
         return err_trap;
       }
@@ -943,7 +930,6 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
       if(stack[reg[reg_sp] - 1] >= reg[reg_cs] || stack[reg[reg_sp] - 1] < reg[reg_cb]){
         reg[reg_ia] = stack[reg[reg_sp] - 1];
 	free(stack);
-	free(heap);
 	free(call_stack);
         return err_trap;
       }
@@ -955,7 +941,6 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
       if(stack[reg[reg_sp] - 1] >= reg[reg_cs] || stack[reg[reg_sp] - 1] < reg[reg_cb]){
         reg[reg_ia] = stack[reg[reg_sp] - 1];
 	free(stack);
-	free(heap);
 	free(call_stack);
         return err_trap;
       }
@@ -968,7 +953,6 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
       if(stack[reg[reg_sp] - 1] >= reg[reg_cs] || stack[reg[reg_sp] - 1] < reg[reg_cb]){
         reg[reg_ia] = stack[reg[reg_sp] - 1];
 	free(stack);
-	free(heap);
 	free(call_stack);
         return err_trap;
       }
@@ -980,7 +964,6 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
       if(stack[reg[reg_sp] - 1] >= reg[reg_cs] || stack[reg[reg_sp] - 1] < reg[reg_cb]){
         reg[reg_ia] = stack[reg[reg_sp] - 1];
 	free(stack);
-	free(heap);
 	free(call_stack);
         return err_trap;
       }
@@ -993,7 +976,6 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
       if(stack[reg[reg_sp] - 1] >= reg[reg_cs] || stack[reg[reg_sp] - 1]<reg[reg_cb]){
         reg[reg_ia] = stack[reg[reg_sp] - 1];
 	free(stack);
-	free(heap);
 	free(call_stack);
         return err_trap;
       }
@@ -1005,7 +987,6 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
       if(stack[reg[reg_sp] - 1] >= reg[reg_cs] || stack[reg[reg_sp] - 1]<reg[reg_cb]){
         reg[reg_ia] = stack[reg[reg_sp] - 1];
 	free(stack);
-	free(heap);
 	free(call_stack);
         return err_trap;
       }
@@ -1017,7 +998,6 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
       if(stack[reg[reg_sp] - 1] >= reg[reg_cs] || stack[reg[reg_sp] - 1] < reg[reg_cb]){
         reg[reg_ia] = stack[reg[reg_sp] - 1];
 	free(stack);
-	free(heap);
 	free(call_stack);
         return err_trap;
       }
@@ -1291,7 +1271,6 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
     case op_panic:
       if(stack[reg[reg_sp] - 1]){
 	free(stack);
-	free(heap);
 	free(call_stack);
         return err_panic;
       }
@@ -1301,7 +1280,6 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
 
     case op_force_panic:
       free(stack);
-      free(heap);
       free(call_stack);
       return err_panic;
 
@@ -1363,7 +1341,6 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
       if(reg[reg_pc] + stack[reg[reg_sp]-1] >= reg[reg_cs] || reg[reg_pc] + stack[reg[reg_sp] - 1] < reg[reg_cb]){
         reg[reg_ia] = reg[reg_pc] + stack[reg[reg_sp] - 1];
 	free(stack);
-	free(heap);
 	free(call_stack);
         return err_trap;
       }
@@ -1380,7 +1357,6 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
       if(reg[reg_pc] + stack[reg[reg_sp] - 1] >= reg[reg_cs] || reg[reg_pc] + stack[reg[reg_sp] - 1] < reg[reg_cb]){
         reg[reg_ia] = reg[reg_pc] + stack[reg[reg_sp] - 1];
 	free(stack);
-	free(heap);
 	free(call_stack);
         return err_trap;
       }
@@ -1397,7 +1373,6 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
       if(reg[reg_pc] + stack[reg[reg_sp]-1] >= reg[reg_cs] || reg[reg_pc] + stack[reg[reg_sp] - 1] < reg[reg_cb]){
         reg[reg_ia] = reg[reg_pc] + stack[reg[reg_sp] - 1];
 	free(stack);
-	free(heap);
 	free(call_stack);
         return err_trap;
       }
@@ -1414,7 +1389,6 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
       if(reg[reg_pc] + stack[reg[reg_sp] - 1] >= reg[reg_cs] || reg[reg_pc] + stack[reg[reg_sp] - 1] < reg[reg_cb]){
         reg[reg_ia] = reg[reg_pc] + stack[reg[reg_sp] - 1];
 	free(stack);
-	free(heap);
 	free(call_stack);
         return err_trap;
       }
@@ -1431,7 +1405,6 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
       if(reg[reg_pc] + stack[reg[reg_sp] - 1] >= reg[reg_cs] || reg[reg_pc] + stack[reg[reg_sp] - 1] < reg[reg_cb]){
         reg[reg_ia] = reg[reg_pc] + stack[reg[reg_sp] - 1];
 	free(stack);
-	free(heap);
 	free(call_stack);
         return err_trap;
       }
@@ -1448,7 +1421,6 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
       if(reg[reg_pc] + stack[reg[reg_sp] - 1] >= reg[reg_cs] || reg[reg_pc] + stack[reg[reg_sp] - 1] < reg[reg_cb]){
         reg[reg_ia] = reg[reg_pc] + stack[reg[reg_sp] - 1];
 	free(stack);
-	free(heap);
 	free(call_stack);
         return err_trap;
       }
@@ -1465,7 +1437,6 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
       if(reg[reg_pc] + stack[reg[reg_sp] - 1] >= reg[reg_cs] || reg[reg_pc] + stack[reg[reg_sp] - 1] < reg[reg_cb]){
         reg[reg_ia] = reg[reg_pc] + stack[reg[reg_sp] - 1];
 	free(stack);
-	free(heap);
 	free(call_stack);
         return err_trap;
       }
@@ -1482,7 +1453,6 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
       if(reg[reg_pc] + stack[reg[reg_sp] - 1] >= reg[reg_cs] || reg[reg_pc] + stack[reg[reg_sp] - 1] < reg[reg_cb]){
         reg[reg_ia] = reg[reg_pc] + stack[reg[reg_sp] - 1];
 	free(stack);
-	free(heap);
 	free(call_stack);
         return err_trap;
       }
@@ -1499,7 +1469,6 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
       if(reg[reg_pc] + stack[reg[reg_sp] - 1] >= reg[reg_cs] || reg[reg_pc] + stack[reg[reg_sp] - 1] < reg[reg_cb]){
         reg[reg_ia] = reg[reg_pc] + stack[reg[reg_sp]-1];
 	free(stack);
-	free(heap);
 	free(call_stack);
         return err_trap;
       }
@@ -1511,7 +1480,6 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
       if(stack[reg[reg_sp] - 1] >= reg[reg_cs] || stack[reg[reg_sp] - 1] < reg[reg_cb]){
         reg[reg_ia] = stack[reg[reg_sp] - 1];
 	free(stack);
-	free(heap);
 	free(call_stack);
         return err_trap;
       }
@@ -1528,7 +1496,6 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
       if(stack[reg[reg_sp] - 1] >= reg[reg_cs] || stack[reg[reg_sp] - 1] < reg[reg_cb]){
 	reg[reg_ia] = stack[reg[reg_sp] - 1];
 	free(stack);
-	free(heap);
 	free(call_stack);
         return err_trap;
       }
@@ -1545,7 +1512,6 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
       if(stack[reg[reg_sp] - 1] >= reg[reg_cs] || stack[reg[reg_sp] - 1]<reg[reg_cb]){
         reg[reg_ia] = stack[reg[reg_sp] - 1];
 	free(stack);
-	free(heap);
 	free(call_stack);
         return err_trap;
       }
@@ -1562,7 +1528,6 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
       if(stack[reg[reg_sp] - 1] >= reg[reg_cs] || stack[reg[reg_sp] - 1] < reg[reg_cb]){
         reg[reg_ia] = stack[reg[reg_sp] - 1];
 	free(stack);
-	free(heap);
 	free(call_stack);
         return err_trap;
       }
@@ -1579,7 +1544,6 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
       if(stack[reg[reg_sp] - 1] >= reg[reg_cs] || stack[reg[reg_sp] - 1] < reg[reg_cb]){
         reg[reg_ia] = stack[reg[reg_sp] - 1];
 	free(stack);
-	free(heap);
 	free(call_stack);
         return err_trap;
       }
@@ -1596,7 +1560,6 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
       if(stack[reg[reg_sp] - 1] >= reg[reg_cs] || stack[reg[reg_sp] - 1] < reg[reg_cb]){
         reg[reg_ia] = stack[reg[reg_sp] - 1];
 	free(stack);
-	free(heap);
 	free(call_stack);
         return err_trap;
       }
@@ -1613,7 +1576,6 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
       if(stack[reg[reg_sp] - 1] >= reg[reg_cs] || stack[reg[reg_sp] - 1] < reg[reg_cb]){
         reg[reg_ia] = stack[reg[reg_sp] - 1];
 	free(stack);
-	free(heap);
 	free(call_stack);
         return err_trap;
       }
@@ -1630,7 +1592,6 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
       if(stack[reg[reg_sp] - 1] >= reg[reg_cs] || stack[reg[reg_sp] - 1] < reg[reg_cb]){
         reg[reg_ia] = stack[reg[reg_sp] - 1];
 	free(stack);
-	free(heap);
 	free(call_stack);
         return err_trap;
       }
@@ -1647,7 +1608,6 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
       if(stack[reg[reg_sp] - 1] >= reg[reg_cs] || stack[reg[reg_sp] - 1] < reg[reg_cb]){
         reg[reg_ia] = stack[reg[reg_sp] - 1];
 	free(stack);
-	free(heap);
 	free(call_stack);
         return err_trap;
       }
@@ -1664,7 +1624,6 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
       if(stack[reg[reg_sp] - 1] >= reg[reg_cs] || stack[reg[reg_sp] - 1] < reg[reg_cb]){
         reg[reg_ia] = stack[reg[reg_sp] - 1];
 	free(stack);
-	free(heap);
 	free(call_stack);
         return err_trap;
       }
@@ -1683,7 +1642,6 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
       if(stack[reg[reg_sp] - 1] >= reg[reg_cs] || stack[reg[reg_sp] - 1] < reg[reg_cb]){
         reg[reg_ia] = stack[reg[reg_sp] - 1];
 	free(stack);
-	free(heap);
 	free(call_stack);
         return err_trap;
       }
@@ -1702,7 +1660,6 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
       if(stack[reg[reg_sp] - 1] >= reg[reg_cs] || stack[reg[reg_sp] - 1] < reg[reg_cb]){
         reg[reg_ia] = stack[reg[reg_sp] - 1];
 	free(stack);
-	free(heap);
 	free(call_stack);
         return err_trap;
       }
@@ -1721,7 +1678,6 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
       if(stack[reg[reg_sp] - 1] >= reg[reg_cs] || stack[reg[reg_sp] - 1] < reg[reg_cb]){
         reg[reg_ia] = stack[reg[reg_sp] - 1];
 	free(stack);
-	free(heap);
 	free(call_stack);
         return err_trap;
       }
@@ -1740,7 +1696,6 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
       if(stack[reg[reg_sp] - 1] >= reg[reg_cs] || stack[reg[reg_sp] - 1] < reg[reg_cb]){
         reg[reg_ia] = stack[reg[reg_sp] - 1];
 	free(stack);
-	free(heap);
 	free(call_stack);
         return err_trap;
       }
@@ -1759,7 +1714,6 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
       if(stack[reg[reg_sp] - 1] >= reg[reg_cs] || stack[reg[reg_sp] - 1] < reg[reg_cb]){
         reg[reg_ia] = stack[reg[reg_sp] - 1];
 	free(stack);
-	free(heap);
 	free(call_stack);
         return err_trap;
       }
@@ -1778,7 +1732,6 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
       if(stack[reg[reg_sp] - 1] >= reg[reg_cs] || stack[reg[reg_sp] - 1] < reg[reg_cb]){
         reg[reg_ia] = stack[reg[reg_sp] - 1];
 	free(stack);
-	free(heap);
 	free(call_stack);
         return err_trap;
       }
@@ -1797,7 +1750,6 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
       if(stack[reg[reg_sp] - 1] >= reg[reg_cs] || stack[reg[reg_sp] - 1] < reg[reg_cb]){
         reg[reg_ia] = stack[reg[reg_sp] - 1];
 	free(stack);
-	free(heap);
 	free(call_stack);
         return err_trap;
       }
@@ -1816,7 +1768,6 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
       if(stack[reg[reg_sp] - 1] >= reg[reg_cs] || stack[reg[reg_sp] - 1] < reg[reg_cb]){
         reg[reg_ia] = stack[reg[reg_sp] - 1];
 	free(stack);
-	free(heap);
 	free(call_stack);
         return err_trap;
       }
@@ -1830,7 +1781,6 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
       if(reg[reg_pc] + stack[reg[reg_sp] - 1] >= reg[reg_cs] || reg[reg_pc] + stack[reg[reg_sp] - 1] < reg[reg_cb]){
         reg[reg_ia] = reg[reg_pc] + stack[reg[reg_sp] - 1];
 	free(stack);
-	free(heap);
 	free(call_stack);
         return err_trap;
       }
@@ -1849,7 +1799,6 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
       if(reg[reg_pc] + stack[reg[reg_sp] - 1] >= reg[reg_cs] || reg[reg_pc] + stack[reg[reg_sp] - 1] < reg[reg_cb]){
         reg[reg_ia] = reg[reg_pc] + stack[reg[reg_sp] - 1];
 	free(stack);
-	free(heap);
 	free(call_stack);
         return err_trap;
       }
@@ -1868,7 +1817,6 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
       if(reg[reg_pc] + stack[reg[reg_sp] - 1] >= reg[reg_cs] || reg[reg_pc] + stack[reg[reg_sp] - 1] < reg[reg_cb]){
         reg[reg_ia] = reg[reg_pc] + stack[reg[reg_sp] - 1];
 	free(stack);
-	free(heap);
 	free(call_stack);
         return err_trap;
       }
@@ -1887,7 +1835,6 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
       if(reg[reg_pc] + stack[reg[reg_sp] - 1] >= reg[reg_cs] || reg[reg_pc] + stack[reg[reg_sp] - 1] < reg[reg_cb]){
         reg[reg_ia] = reg[reg_pc] + stack[reg[reg_sp] - 1];
 	free(stack);
-	free(heap);
 	free(call_stack);
         return err_trap;
       }
@@ -1906,7 +1853,6 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
       if(reg[reg_pc] + stack[reg[reg_sp] - 1] >= reg[reg_cs] || reg[reg_pc] + stack[reg[reg_sp] - 1] < reg[reg_cb]){
         reg[reg_ia] = reg[reg_pc] + stack[reg[reg_sp] - 1];
 	free(stack);
-	free(heap);
 	free(call_stack);
         return err_trap;
       }
@@ -1925,7 +1871,6 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
       if(reg[reg_pc] + stack[reg[reg_sp] - 1] >= reg[reg_cs] || reg[reg_pc] + stack[reg[reg_sp] - 1] < reg[reg_cb]){
         reg[reg_ia] = reg[reg_pc] + stack[reg[reg_sp] - 1];
 	free(stack);
-	free(heap);
 	free(call_stack);
         return err_trap;
       }
@@ -1944,7 +1889,6 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
       if(reg[reg_pc] + stack[reg[reg_sp] - 1] >= reg[reg_cs] || reg[reg_pc] + stack[reg[reg_sp] - 1] < reg[reg_cb]){
         reg[reg_ia] = reg[reg_pc] + stack[reg[reg_sp] - 1];
 	free(stack);
-	free(heap);
 	free(call_stack);
         return err_trap;
       }
@@ -1963,7 +1907,6 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
       if(reg[reg_pc] + stack[reg[reg_sp] - 1] >= reg[reg_cs] || reg[reg_pc] + stack[reg[reg_sp] - 1] < reg[reg_cb]){
         reg[reg_ia] = reg[reg_pc] + stack[reg[reg_sp] - 1];
 	free(stack);
-	free(heap);
 	free(call_stack);
         return err_trap;
       }
@@ -1982,7 +1925,6 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
       if(reg[reg_pc] + stack[reg[reg_sp] - 1] >= reg[reg_cs] || reg[reg_pc] + stack[reg[reg_sp] - 1] < reg[reg_cb]){
         reg[reg_ia] = reg[reg_pc] + stack[reg[reg_sp] - 1];
 	free(stack);
-	free(heap);
 	free(call_stack);
         return err_trap;
       }
@@ -2095,12 +2037,24 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
       break;
 
     case op_invoke:
-      switch (stack[reg[reg_sp] - 2]) {
+      reg[reg_sp] -= 2;
+      switch (stack[reg[reg_sp]]) {
       case 0: /* input/output */
-	switch(stack[reg[reg_sp] - 1]) {
-	case 0: /* write */
-	  ds_putstr(code_c, stack[reg[reg_sp] - 3], &reg[reg_gpr0]);
-	  reg[reg_sp]--;
+	switch(stack[reg[reg_sp] + 1]) {
+	case 0: /* putstr */
+	  ds_putstr(code_c, stack[--reg[reg_sp]], &reg[reg_gpr0]);
+	  break;
+
+	case 1: /* put */
+	  ds_put(stack[--reg[reg_sp]], &reg[reg_gpr0]);
+	  break;
+
+	case 2: /* putchar */
+	  ds_putchar(stack[--reg[reg_sp]], &reg[reg_gpr0]);
+	  break;
+
+	case 3: /* putfmt */
+	  ds_putfmt(code, stack[--reg[reg_sp]], stack, &reg[reg_sp], &reg[reg_gpr0]);
 	  break;
 
 	default:
@@ -2111,13 +2065,11 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs) {
       default:
 	return err_invoke;
       }
-      reg[reg_sp] -= 2;
       reg[reg_pc]++;
       break;
 
     default:
       free(stack);
-      free(heap);
       free(call_stack);
       return err_illegalinstruction;
     }
