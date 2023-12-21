@@ -192,8 +192,8 @@
 	  var heap = Module._malloc(heap_size);
 	  var ds_program = Module._malloc(code.length);
 	  Module.writeArrayToMemory(code, ds_program);
-	  var input_device = Module._malloc(4096 * 4);
-	  var output_device = Module._malloc(4096 * 4);
+	  var input_device = Module._malloc(1048576 * 4);
+	  var output_device = Module._malloc(1048576 * 4);
 	  let ret = Module._eval(ds_program, code.length, heap, heap_size, 4, input_device, output_device);
 	  console.log(ret);
 	  write_output(output_device);
