@@ -7,17 +7,7 @@
 #include "opcodes.h"
 #include "prof.h"
 #include "sysf.h"
-
-#define reg_pc 0
-#define reg_sp 1
-#define reg_cs 2
-#define reg_hsz 3
-#define reg_ssz 4
-#define reg_cb 5
-#define reg_ia 6
-#define reg_clp 7
-#define reg_lop 8
-#define reg_gpr0 9
+#include "regs.h"
 
 static void *aligned_malloc(size_t alignment, size_t size){
   void *return_mem;
@@ -28,12 +18,7 @@ static void *aligned_malloc(size_t alignment, size_t size){
   return return_mem;
 }
 
-#define REM_USE(i) (void)i;
-
-EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs, void *heap, ysm_l heap_size, ysm_ui heap_alignment) {
-  REM_USE(heap_size);
-  REM_USE(heap_alignment);
-
+EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs, void *heap, ysm_l heap_size, ysm_ui heap_alignment, ysm_i *input_device, ysm_i *output_device) {
   ysm_l reg[1 + reg_gpr0 + 7];
   ysm_l *stack, *call_stack;
   ysm_uc *code_uc;
@@ -60,6 +45,11 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs, void *heap, ysm_l heap_size,
   ysm_l l, l_1;
   ysm_uc opcode;
 
+  /* dipshit specific */
+
+  ysm_l input_device_pt;
+  ysm_l output_device_pt;
+
   /* initialize stuff */
 
   if ((stack = aligned_malloc(_Alignof(ysm_l), STACK_CELLS * sizeof(ysm_l))) == NULL) {
@@ -75,6 +65,7 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs, void *heap, ysm_l heap_size,
   reg[reg_pc] = 0;
   reg[reg_cs] = cs;
   reg[reg_ia] = 0;
+  reg[reg_hsz] = heap_size;
   reg[reg_clp] = 0;
   reg[reg_lop] = op_nop;
 
@@ -92,6 +83,13 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs, void *heap, ysm_l heap_size,
   heap_s = heap;
   heap_i = heap;
   heap_l = heap;
+
+  /* dipshit specific */
+
+  input_device_pt = 0;
+  output_device_pt = 0;
+
+  output_device[output_device_pt] = -1;
 
   /* --- */
 
@@ -115,12 +113,13 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs, void *heap, ysm_l heap_size,
     case op_halt:
       free(stack);
       free(call_stack);
-      return 0;
+      return err_success;
 
     case op_haltr:
+      l = stack[reg[reg_sp]-1];
       free(stack);
       free(call_stack);
-      return stack[reg[reg_sp]-1];
+      return l;
 
     case op_rbs:
       reg[reg_pc]++;
@@ -2025,11 +2024,7 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs, void *heap, ysm_l heap_size,
       break;
 
     case op_open:
-      switch (stack[reg[reg_sp] - 1]) {
-      case 0: /* input/output */
-	break;
-
-      default:
+      if (open(stack[reg[reg_sp] - 1]) == err_open) {
 	return err_open;
       }
       reg[reg_sp]--;
@@ -2038,31 +2033,7 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs, void *heap, ysm_l heap_size,
 
     case op_invoke:
       reg[reg_sp] -= 2;
-      switch (stack[reg[reg_sp]]) {
-      case 0: /* input/output */
-	switch(stack[reg[reg_sp] + 1]) {
-	case 0: /* putstr */
-	  ds_putstr(code_c, stack[--reg[reg_sp]], &reg[reg_gpr0]);
-	  break;
-
-	case 1: /* put */
-	  ds_put(stack[--reg[reg_sp]], &reg[reg_gpr0]);
-	  break;
-
-	case 2: /* putchar */
-	  ds_putchar(stack[--reg[reg_sp]], &reg[reg_gpr0]);
-	  break;
-
-	case 3: /* putfmt */
-	  ds_putfmt(code, stack[--reg[reg_sp]], stack, &reg[reg_sp], &reg[reg_gpr0]);
-	  break;
-
-	default:
-	  return err_invoke;
-	}
-	break;
-
-      default:
+      if (invoke(stack[reg[reg_sp]], stack[reg[reg_sp] + 1], code, heap, heap_alignment, stack, reg, input_device, &input_device_pt, output_device, &output_device_pt) == err_invoke) {
 	return err_invoke;
       }
       reg[reg_pc]++;
@@ -2074,5 +2045,6 @@ EMSCRIPTEN_KEEPALIVE int eval(void *code, ysm_l cs, void *heap, ysm_l heap_size,
       return err_illegalinstruction;
     }
   }
-  return 0;
+
+  return err_success;
 }

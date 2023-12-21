@@ -1,9 +1,10 @@
 #ifndef SYSF_H
 #define SYSF_H
 
-void ds_putstr(ysm_c *code, ysm_l off, ysm_l *r);
-void ds_put(ysm_l e, ysm_l *r);
-void ds_putchar(ysm_c e, ysm_l *r);
-void ds_putfmt(ysm_c *code, ysm_l off, ysm_l *stack, ysm_l *sp, ysm_l *r);
+#include "types.h"
+#include "errors.h"
+
+enum error invoke(ysm_l class, ysm_l type, void *code, void *heap, ysm_ui heap_alignment, ysm_l *stack, ysm_l *reg, ysm_i *input_device, ysm_l *input_device_pt, ysm_i *output_device, ysm_l *output_device_pt);
+enum error open(ysm_l class);
 
 #endif
