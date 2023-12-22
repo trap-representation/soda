@@ -187,30 +187,78 @@
 	  }
       }
 
+      function _copy_input(i32array) {
+        var input = document.getElementById("textInput").value;
+        i32array[0] = -1;
+        for (let i = 0; i < 1048576 && i < input.length; i++) {
+	  i32array[i] = input[i].charCodeAt(0);
+	  i32array[i + 1] = -1;
+	}
+	return input.length;
+      }
+
+      function _copy_stuff(js_thing, em_thing, llvm_type, l) {
+        var multiplier = 1;
+        if (llvm_type === "i32" || llvm_type === "i64") {
+          multiplier = 4
+        }
+        else if (llvm_type === "i16") {
+          multiplier = 2;
+        }
+        for (let i = 0; i < l; i++) {
+          Module.setValue(em_thing + i * multiplier, js_thing[i], llvm_type);
+        }
+      }
+			    function wa(){
+			    console.log("hehe");
+			    }
       function eval() {
-	  var heap_size = 4096;
-	  var heap = Module._malloc(heap_size);
-	  var ds_program = Module._malloc(code.length);
-	  Module.writeArrayToMemory(code, ds_program);
-	  var input_device = Module._malloc(1048576 * 4);
-	  var output_device = Module._malloc(1048576 * 4);
-	  let ret = Module._eval(ds_program, code.length, heap, heap_size, 4, input_device, output_device);
-	  console.log(ret);
-	  write_output(output_device);
-	  Module._free(output_device);
-	  Module._free(input_device);
-	  Module._free(ds_program);
-	  Module._free(heap);
+        if (code === undefined) {
+          return;
+        }
+        var heap_size = 1048576 * 10;
+        var heap = Module._malloc(heap_size);
+        if (heap === 0) {
+          console.log("dipshit (error): failed to allocate enough memory");
+          return;
+        }
+        var program = Module._malloc(code.length);
+        if (program === 0) {
+          console.log("dipshit (error): failed to allocate enough memory");
+          return;
+        }
+        _copy_stuff(code, program, "i8", code.length);
+	var input_buffer = new Int32Array(1048576 + 1);
+	var l = _copy_input(input_buffer);
+        var input_device = Module._malloc((1048576 + 1) * 4);
+        if (input_device === 0) {
+          console.log("dipshit (error): failed to allocate enough memory");
+          return;
+        }
+        _copy_stuff(input_buffer, input_device, "i32", l + 1);
+        var output_device = Module._malloc(1048576 * 4);
+        if (output_device === 0) {
+          console.log("dipshit (error): failed to allocate enough memory");
+          return;
+        }
+        let ret = Module._eval(program, code.length, heap, heap_size, 4, input_device, output_device);
+        console.log(ret);
+        write_output(output_device);
+        Module._free(output_device);
+        Module._free(input_device);
+        Module._free(input_device);
+        Module._free(program);
+        Module._free(heap);
       }
 
       function write_output(output_buffer) {
-	  var s = "";
-	  var v;
-	  while ((v = getValue(output_buffer, "i32")) != -1) {
-	      s += String.fromCharCode(v);
-	      output_buffer += 4;
-	  }
-	  document.getElementById("output_device").innerText = s;
+        var s = "";
+	var v;
+	while ((v = getValue(output_buffer, "i32")) != -1) {
+	    s += String.fromCharCode(v);
+	    output_buffer += 4;
+	}
+	document.getElementById("output_device").innerText = s;
       }
     </script>
     <header>
@@ -223,9 +271,9 @@
 	<li><a href="#contact">Contact</a></li>
       </ul>
     </nav>
-    <p style="margin-top: 0.5rem; line-spacing: 0.3rem; font-size: 20px; letter-spacing: 0.08rem; word-spacing: 0.1rem;">When humanity is one a brink of collapse, dragons burn down cities, the realms tear, the pantheon is razed, and even the fiercest of warrior from Valhalla cannot stop the destruction, there is only one mythical being that will protect us all and bring back Midgard its former glory: Dipshit, the ISA that can work with unsigned shit. You ever think you're getting old and your back hurts? Fear no more, because Dipshit is also as tack machine and is guaranteed to help you grow back your hair. Maybe it won't fix your back pain. 9/10 psychologists recommend Dipshit. Order today by calling 9800-DIPSHIT and you'll get one extra Dipshit for free (T&C apply). Say goodbye to your sleep paralysis demon, because Dipshit is here.</p>
+    <p style="margin-top: 0.5rem; line-spacing: 0.3rem; font-size: 20px; letter-spacing: 0.08rem; word-spacing: 0.1rem;">When humanity is one a brink of collapse, dragons burn down cities, the realms tear, the pantheon is razed, and even the fiercest of warriors from Valhalla cannot stop the destruction, there is only one mythical being that will protect us all and bring back Midgard its former glory: Dipshit, the ISA that can work with unsigned shit. You ever think you're getting old and your back hurts? Fear no more, because Dipshit is also a stack machine and is guaranteed to help you grow back your hair. Maybe it won't fix your back pain. 9/10 psychologists recommend Dipshit. Order today by calling 9800-DIPSHIT and you'll get one extra Dipshit for free (T&C apply). Say goodbye to your sleep paralysis demon, because Dipshit is here.</p>
     <br>
-    <p style="margin-top: 0.5rem; letter-spacing: 0.08rem; line-spacing: 0.3rem; word-spacing: 0.1rem; font-size: 20px;">"Dipshit has general purpose registers too, and it heelped my son get better grades in school. I recommend Dipshit to ever parent out there."</p>
+    <p style="margin-top: 0.5rem; letter-spacing: 0.08rem; line-spacing: 0.3rem; word-spacing: 0.1rem; font-size: 20px;">"Dipshit has general purpose registers too, and it helped my son get better grades in school. I recommend Dipshit to ever parent out there."</p>
     <br>
     <p style="margin-top: 0.5rem; letter-spacing: 0.08rem; line-spacing: 0.3rem; word-spacing: 0.1rem; font-size: 20px;">Well, now ain't that a happy customer. Order Dipshit today!</p>
     <main>
@@ -240,7 +288,7 @@
 	  <input type="file" id="fileInput" name="fileInput" onchange="open_file(event)"><br><br><br>
 
 	  <!-- Text input -->
-	  <input type="text" id="textInput" name="textInput" placeholder="Enter text here..."><br><br><br>
+	  <textarea id="textInput" style="height: 20vw; width: 50vw;" name="textInput" placeholder="Enter text here..."></textarea><br><br><br>
 
 	  <!-- Run button -->
 	  <button type="button" id="runButton" onclick="eval()">Execute</button>

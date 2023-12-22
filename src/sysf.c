@@ -4,13 +4,17 @@
 #include "sysf.h"
 #include "temp.h"
 
-static void ds_putstr(ysm_c *code, ysm_l off, ysm_l *r, ysm_i *output_device, ysm_l *output_device_pt) {
-  while (code[off] != 0) {
-    output_device[*output_device_pt] = code[off];
+static void ds_putstr(ysm_c *str, ysm_l *r, ysm_i *output_device, ysm_l *output_device_pt) {
+  size_t off = 0;
+
+  while (str[off] != 0) {
+    output_device[*output_device_pt] = str[off];
     (*output_device_pt)++;
     off++;
   }
+
   output_device[*output_device_pt] = -1;
+
   *r = 0;
 }
 
@@ -23,6 +27,7 @@ static void ds_puti(ysm_l e, ysm_l *r, ysm_i *output_device, ysm_l *output_devic
   else {
     ysm_l len = 0;
     ysm_l e_m = e;
+
     while (e_m != 0) {
       e_m /= 10;
       len++;
@@ -46,6 +51,7 @@ static void ds_putchar(ysm_c e, ysm_l *r, ysm_i *output_device, ysm_l *output_de
   output_device[*output_device_pt] = e;
   (*output_device_pt)++;
   output_device[*output_device_pt] = -1;
+
   *r = 0;
 }
 
@@ -75,7 +81,7 @@ static void ds_putfmt(ysm_c *code, ysm_l off, ysm_l *stack, ysm_l *sp, ysm_l *r,
 	break;
 
       case 's':
-	ds_putstr(code, stack[--(*sp)], r, output_device, output_device_pt);
+	ds_putstr(&((char *) code)[stack[--(*sp)]], r, output_device, output_device_pt);
 	if (*r) {
 	  return;
 	}
@@ -91,7 +97,31 @@ static void ds_putfmt(ysm_c *code, ysm_l off, ysm_l *stack, ysm_l *sp, ysm_l *r,
       off++;
     }
   }
+
   *r = 0;
+}
+
+static void ds_readin(ysm_c *heap, ysm_l size, ysm_l *r, ysm_i *input_device, ysm_l *input_device_pt) {
+  *r = 0;
+
+  for (ysm_l i = 0; i <= size; i++) {
+    if (input_device[*input_device_pt] == -1) {
+      break;
+    }
+    heap[i] = input_device[*input_device_pt];
+    heap[i + 1] = 0;
+    (*input_device_pt)++;
+    (*r)++;
+  }
+}
+
+static void ds_eofin(ysm_l *stack, ysm_l sp, ysm_l *r, ysm_i *input_device, ysm_l *input_device_pt) {
+  if (input_device[*input_device_pt] == -1) {
+    stack[sp] = *r = 1;
+  }
+  else {
+    stack[sp] = *r = 0;
+  }
 }
 
 enum error open(ysm_l class) {
@@ -116,7 +146,7 @@ enum error invoke(ysm_l class, ysm_l type, void *code, void *heap, ysm_ui heap_a
   case 0: /* input/output */
     switch(type) {
     case 0: /* putstr */
-      ds_putstr((char *)code, stack[--reg[reg_sp]], &reg[reg_gpr0], output_device, output_device_pt);
+      ds_putstr(&((ysm_c *) code)[stack[--reg[reg_sp]]], &reg[reg_gpr0], output_device, output_device_pt);
       break;
 
     case 1: /* puti */
@@ -129,6 +159,15 @@ enum error invoke(ysm_l class, ysm_l type, void *code, void *heap, ysm_ui heap_a
 
     case 3: /* putfmt */
       ds_putfmt(code, stack[--reg[reg_sp]], stack, &reg[reg_sp], &reg[reg_gpr0], output_device, output_device_pt);
+      break;
+
+    case 4: /* readin */
+      ds_readin(&((ysm_c *) heap)[stack[reg[reg_sp] - 2]], stack[reg[reg_sp] - 1], &reg[reg_gpr0], input_device, input_device_pt);
+      stack[reg[reg_sp]] -= 2;
+      break;
+
+    case 5: /* eofin */
+      ds_eofin(stack, reg[reg_sp]++, &reg[reg_gpr0], input_device, input_device_pt);
       break;
 
     default:

@@ -1992,7 +1992,7 @@ unexportedRuntimeFunction('addOnPreMain', false);
 unexportedRuntimeFunction('addOnExit', false);
 unexportedRuntimeFunction('addOnPostRun', false);
 unexportedRuntimeFunction('writeStringToMemory', false);
-Module["writeArrayToMemory"] = writeArrayToMemory;
+unexportedRuntimeFunction('writeArrayToMemory', false);
 unexportedRuntimeFunction('writeAsciiToMemory', false);
 unexportedRuntimeFunction('addRunDependency', true);
 unexportedRuntimeFunction('removeRunDependency', true);
