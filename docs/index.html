@@ -2,8 +2,8 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dipshit</title>
-    <script src="dipshit.js"></script>
+    <title>Soda</title>
+    <script src="soda.js"></script>
     <style>
 
       /* Global Styles */
@@ -219,12 +219,12 @@
         var heap_size = 1048576 * 10;
         var heap = Module._malloc(heap_size);
         if (heap === 0) {
-          console.log("dipshit (error): failed to allocate enough memory");
+          console.log("soda (error): failed to allocate enough memory");
           return;
         }
         var program = Module._malloc(code.length);
         if (program === 0) {
-          console.log("dipshit (error): failed to allocate enough memory");
+          console.log("soda (error): failed to allocate enough memory");
           return;
         }
         _copy_stuff(code, program, "i8", code.length);
@@ -232,13 +232,13 @@
 	var l = _copy_input(input_buffer);
         var input_device = Module._malloc((1048576 + 1) * 4);
         if (input_device === 0) {
-          console.log("dipshit (error): failed to allocate enough memory");
+          console.log("soda (error): failed to allocate enough memory");
           return;
         }
         _copy_stuff(input_buffer, input_device, "i32", l + 1);
         var output_device = Module._malloc(1048576 * 4);
         if (output_device === 0) {
-          console.log("dipshit (error): failed to allocate enough memory");
+          console.log("soda (error): failed to allocate enough memory");
           return;
         }
         let ret = Module._eval(program, code.length, heap, heap_size, 4, input_device, output_device);
@@ -262,8 +262,8 @@
       }
     </script>
     <header>
-      <h1 style="color: #1D1D1D; margin-top: 0.03%;">Welcome to Dipshit</h1>
-      <p style="font-size: 17px; color: #404040; margin-top: 0.04%; margin-left: 0.2%; word-spacing: 0.3rem;"> (And Dipshit is the best shit innit!)</p></header>
+      <h1 style="color: #1D1D1D; margin-top: 0.03%;">Welcome to Soda</h1>
+      <p style="font-size: 17px; color: #404040; margin-top: 0.04%; margin-left: 0.2%; word-spacing: 0.3rem;"> (And Soda is the best thing, innit!)</p></header>
     <nav>
       <ul>
 	<li><a href="#home">Home</a></li>
@@ -271,14 +271,14 @@
 	<li><a href="#contact">Contact</a></li>
       </ul>
     </nav>
-    <p style="margin-top: 0.5rem; line-spacing: 0.3rem; font-size: 20px; letter-spacing: 0.08rem; word-spacing: 0.1rem;">When humanity is one a brink of collapse, dragons burn down cities, the realms tear, the pantheon is razed, and even the fiercest of warriors from Valhalla cannot stop the destruction, there is only one mythical being that will protect us all and bring back Midgard its former glory: Dipshit, the ISA that can work with unsigned shit. You ever think you're getting old and your back hurts? Fear no more, because Dipshit is also a stack machine and is guaranteed to help you grow back your hair. Maybe it won't fix your back pain. 9/10 psychologists recommend Dipshit. Order today by calling 9800-DIPSHIT and you'll get one extra Dipshit for free (T&C apply). Say goodbye to your sleep paralysis demon, because Dipshit is here.</p>
+    <p style="margin-top: 0.5rem; line-spacing: 0.3rem; font-size: 20px; letter-spacing: 0.08rem; word-spacing: 0.1rem;">When humanity is one a brink of collapse, dragons burn down cities, the realms tear, the pantheon is razed, and even the fiercest of warriors from Valhalla cannot stop the destruction, there is only one mythical being that will protect us all and bring back Midgard its former glory: Soda, the ISA that can work with unsigned stuff. You ever think you're getting old and your back hurts? Fear no more, because Soda is also a stack machine and is guaranteed to help you grow back your hair. Maybe it won't fix your back pain. 9/10 psychologists recommend Soda. Order today by calling 9800-SODA and you'll get one extra Soda for free (T&C apply). Say goodbye to your sleep paralysis demon, because Soda is here.</p>
     <br>
-    <p style="margin-top: 0.5rem; letter-spacing: 0.08rem; line-spacing: 0.3rem; word-spacing: 0.1rem; font-size: 20px;">"Dipshit has general purpose registers too, and it helped my son get better grades in school. I recommend Dipshit to ever parent out there."</p>
+    <p style="margin-top: 0.5rem; letter-spacing: 0.08rem; line-spacing: 0.3rem; word-spacing: 0.1rem; font-size: 20px;">"Soda has general purpose registers too, and it helped my son get better grades in school. I recommend Soda to ever parent out there."</p>
     <br>
-    <p style="margin-top: 0.5rem; letter-spacing: 0.08rem; line-spacing: 0.3rem; word-spacing: 0.1rem; font-size: 20px;">Well, now ain't that a happy customer. Order Dipshit today!</p>
+    <p style="margin-top: 0.5rem; letter-spacing: 0.08rem; line-spacing: 0.3rem; word-spacing: 0.1rem; font-size: 20px;">Well, now ain't that a happy customer. Order Soda today!</p>
     <main>
       <section id="content">
-	<h2>Dipshit</h2><br>
+	<h2>Soda</h2><br>
 	<p style="background-color: #e5e5e5; font-size: 2vw; width: 78vw; color: #000000; text-align: center; margin-left: 3%; margin-right: 3%;">Use the form below to upload a file, enter text, and click on the Run button to display output.</p>
 
 	<!-- Input form -->
@@ -302,7 +302,7 @@
     </main>
     <section id="about">
       <h2>A word from the authors</h2>
-      <p>Why we decided to make Dipshit, you might ask. Or may not. But we'll answer anyway because this is our website... of course, in case you weren't already aware of that. So, simplicity isn't always proportional to how simple it is to program a computer; it is usually quite the opposite. It is how simple the actual computer is, and this is excatly what YSM tries to achieve: simplicity. Dipshit is an implementation of the YSM ISA that makes writing portable applications for the web simpler without any of the bloat that comes with modern tools.</p>
+      <p>Why we decided to make Soda, you might ask. Or may not. But we'll answer anyway because this is our website... of course, in case you weren't already aware of that. So, simplicity isn't always proportional to how simple it is to program a computer; it is usually quite the opposite. It is how simple the actual computer is, and this is excatly what YSM tries to achieve: simplicity. Soda is an implementation of the YSM ISA that makes writing portable applications for the web simpler without any of the bloat that comes with modern tools.</p>
     </section><hr>
     <section id="contact" style="color: #1d1d1d;">
       <h2 style="margin-left: 23px; color: #666;"><em>Reach out to us!</em></h2>
